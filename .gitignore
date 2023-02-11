@@ -1,3 +1,4 @@
 app.exe
 src/test.cpp
 *.o
+output.txt
