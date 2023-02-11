@@ -7,6 +7,15 @@ Jika pada komputer Anda telah terinstall makefile maka gunakan command tersebut 
 ```
 make
 ```
+
+atau menggunakan compiler g++
+
+```
+g++ -std=c++20 -o2 -Iheader/ -c -o src/main.o src/main.cpp
+g++ -std=c++20 -o2 -Iheader/ -c -o src/utils.o src/utils.cpp
+g++ src/main.o src/utils.o -o app.exe
+```
+
 kemudian untuk menjalankan program jalankan command berikut
 ```
 ./app.exe
