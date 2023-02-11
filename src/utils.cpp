@@ -99,10 +99,6 @@ int pilihanUser()
     return prosesKeputusan(&keputusan, pilKeputusan, 2);
 }
 
-void melihatMenu()
-{
-}
-
 // Memvalidasi jawaban user -> Akan mengiterasi input user sampai pilihan user benar
 int prosesKeputusan(int *usrInput, int *ptrArr, int sizeArr)
 {
