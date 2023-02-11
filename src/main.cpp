@@ -1,7 +1,9 @@
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 struct Menu
 {
@@ -16,6 +18,7 @@ struct Pelanggan
 {
     std::string Nama;
     std::unordered_map<std::string, int> menuPilihan;
+    std::unordered_map<std::string, Menu> summary;
 };
 
 int pemilikTokoStart();
@@ -44,16 +47,18 @@ int main()
     auto mapMenu = foodMenu;
     mapMenu.insert(drinkMenu.begin(), drinkMenu.end());
 
+    std::vector<Pelanggan> historyPelanggan;
+
     while (true)
     {
         int pilihan = pemilikTokoStart();
+        Pelanggan customer;
         bool flagMembeli = false;
 
         std::cout << std::endl;
         if (pilihan == 1) // Pelanggan Masuk
         {
             clearScreen();
-            Pelanggan customer;
             std::cout << "Masukkan Nama Anda: ";
             std::cin.ignore();
             getline(std::cin, customer.Nama);
@@ -128,13 +133,6 @@ int main()
                                 break;
                             }
                         }
-
-                        // for (auto iter = customer.menuPilihan.begin(); iter != customer.menuPilihan.end(); ++iter)
-                        // {
-                        //     std::cout << iter->first << ' ' << iter->second << std::endl;
-                        // }
-                        // std::cin.ignore();
-                        // std::cin.get();
                     }
                 }
                 if (pilUser == 2) // Pelanggan mau keluar
@@ -149,6 +147,10 @@ int main()
                             hasilStruk[iter->first].Harga = iter->second * mapMenu[iter->first].Harga;
                         }
 
+                        customer.summary.insert(hasilStruk.begin(), hasilStruk.end());
+
+                        historyPelanggan.push_back(customer);
+
                         clearScreen();
                         tampilkanStruk(hasilStruk);
                         std::cin.ignore();
@@ -158,6 +160,59 @@ int main()
 
                     break;
                 }
+            }
+        }
+
+        else if (pilihan == 2) // Menutup Toko
+        {
+            if (historyPelanggan.size() == 0)
+            {
+                std::cout << "Tidak Ada Penjualan\n";
+                return 0;
+            }
+            else
+            {
+                int sizeHist = historyPelanggan.size();
+
+                clearScreen();
+                std::cin.ignore();
+
+                // for (auto iter = historyPelanggan[0].summary.begin(); iter != historyPelanggan[0].summary.end(); ++iter)
+                // {
+                //     std::cout << iter->first << ' ' << iter->second.Kategori << std::endl;
+                // }
+
+                for (int i = 0; i < sizeHist; ++i)
+                {
+                    std::cout << "Nama Pelanggan: " << historyPelanggan[i].Nama << '\n';
+                    std::unordered_map<std::string, Menu> tempMap;
+                    tempMap.insert(historyPelanggan[i].summary.begin(), historyPelanggan[i].summary.end());
+                    tampilkanStruk(tempMap);
+                    std::cout << '\n';
+                }
+
+                for (int i = 0; i < sizeHist; ++i)
+                {
+                    // std::ofstream ofs{"History-Pelanggan.txt"};
+                    // auto cout_buff = std::cout.rdbuf();
+                    // std::cout.rdbuf(ofs.rdbuf());
+
+                    std::ofstream ofile("output.txt", std::fstream::app); // output file
+                    std::streambuf *oldbuf = std::cout.rdbuf();           // save the buffer
+                    std::cout.rdbuf(ofile.rdbuf());                       // redirect to output.txt
+
+                    std::cout << "Nama Pelanggan: " << historyPelanggan[i].Nama << '\n';
+                    std::unordered_map<std::string, Menu> tempMap;
+                    tempMap.insert(historyPelanggan[i].summary.begin(), historyPelanggan[i].summary.end());
+                    tampilkanStruk(tempMap);
+                    std::cout << '\n';
+
+                    // std::cout.rdbuf(cout_buff);
+                    std::cout.rdbuf(oldbuf);
+                }
+
+                std::cout << "History pesanan tersimpan pada output.txt\n";
+                return 0;
             }
         }
     }
@@ -191,7 +246,7 @@ void tampilkanStruk(std::unordered_map<std::string, Menu>& pilihanBelanja)
         totalTransaksi += menu.Harga;
     }
 
-    std::cout << "\nTotal Transaksi: Rp" << totalTransaksi << "\n";
+    std::cout << "\nTotal Transaksi: Rp" << totalTransaksi << '\n';
 }
 
 void tampilkanMenu(std::unordered_map<std::string, Menu>& menuFood, std::unordered_map<std::string, Menu>& menuDrink)
