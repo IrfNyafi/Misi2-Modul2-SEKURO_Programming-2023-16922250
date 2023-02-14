@@ -1,0 +1,4 @@
+output.txt
+app.exe
+src/*.o
+.vscode
