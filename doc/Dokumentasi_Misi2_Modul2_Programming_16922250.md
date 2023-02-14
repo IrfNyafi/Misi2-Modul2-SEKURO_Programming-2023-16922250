@@ -1,36 +1,9 @@
 # Warung Kang Roger
 
-## Detail-Detail yang Diperlukan
+## Detail-Detail Program
 
-Untuk penyimpanan data makanan dan minuman, penulis mengambil keputusan untuk menyimpan data dalam bentuk *unordered_map*. Penulis memilih tipe data ini karena dalam tiap elemennya, terdapat data-data yang saling berkaitan.
-
-<details><summary><b>Implementasi Unordered_map</b></summary>
-
-```cpp
-std::unordered_map<std::string, Menu> foodMenu;
-foodMenu["Sushi"] = Menu{"Makanan", "Sushi", "111", 25000, 20};
-foodMenu["Ramen"] = Menu{"Makanan", "Ramen", "121", 30000, 30};
-foodMenu["Yakitori"] = Menu{"Makanan", "Yakitori", "131", 5000, 20};
-foodMenu["Niku"] = Menu{"Makanan", "Niku", "141", 25000, 30};
-foodMenu["Takoyaki"] = Menu{"Makanan", "Takoyaki", "151", 18000, 25};
-foodMenu["Okonomiyaki"] = Menu{"Makanan", "Okonomiyaki", "161", 20000, 14};
-foodMenu["Tonkatsu"] = Menu{"Makanan", "Tonkatsu", "171", 30000, 15};
-
-std::unordered_map<std::string, Menu> drinkMenu;
-drinkMenu["Matcha"] = Menu{"Minuman", "Matcha", "211", 14000, 20};
-drinkMenu["Water"] = Menu{"Minuman", "Water", "221", 5000, 40};
-drinkMenu["Coffee"] = Menu{"Minuman", "Coffee", "231", 10000, 20};
-
-auto mapMenu = foodMenu;
-mapMenu.insert(drinkMenu.begin(), drinkMenu.end());
-```
-</details>
-
-<br>
-
-Pada program ini terdapat data-data yang dapat dikelompokkan. Data-data yang berkaitan tersebut dikelompokkan degnan menggunakan struct. Berikut implementasinya
-
-<details><summary><b>Implementasi Struct</b></summary>
+## Bagaimana Cara Mengorganisir Data-data yang Berkaitan
+Agar data-data dapat dengan mudah diakses dan lebih terorganisir maka penulis membagikan data-data menjadi 3 objek yang ditampung dalam struct.
 
 ```cpp
 struct Menu
@@ -42,179 +15,129 @@ struct Menu
     int Stock;
 };
 
+struct KelompokMenu
+{
+    std::vector<std::vector<Menu>> menuMenu;
+
+    void tampilkanMenu();
+    void updateStock(std::string barang, int newValue);
+    int getStock(std::string barang);
+    std::vector<int> search_translation(std::string searchStr);
+};
+
 struct Pelanggan
 {
     std::string Nama;
-    std::unordered_map<std::string, int> menuPilihan;
-    std::unordered_map<std::string, Menu> summary;
+    std::vector<Menu> pesananPelanggan;
+
+    void tampilkanStruk();
+    void handlePelanggan(KelompokMenu& data);
 };
 ```
-</details>
 
-<br>
+**Penjelasan:** Dalam satu menu, terdiri atas unsur-unsur, seperti jenis kategori, nama barang, ID barang, harga barang, dan status stock barang (disimpan dalam struct Menu). Kumpulan-kumpulan menu tersebut, kemudian disimpan sebagai sebuah member dari struct KelompokMenu dalam bentuk array atau vector. Kedua struct yang telah disebutkan tersebut akan menjadi gerbang dari interaksi-interaksi berkaitan dengan menu dan propertinya.
 
-## Fitur-Fitur Tambahan
-Dalam menampilkan menu dan struk belanja, format console out dibuat dengan format tabel. Hal tersebut dapat dicapai dengan memanfaatkan library *iomanip*. Berikut adalah implementasinya
+Kemudian, struct Pelanggan digunakan untuk menampung informasi-informasi berkaitan dengan para pelanggan dari toko, seperti nama dari pelanggan dan pesanan-pesanan yang dipilih oleh pelanggan.
 
-<details><summary><b>Implementasi Format Table</b></summary>
+## Proses Validasi Input
+Program yang penulis buat berbasiskan console sehingga input dan output dari program ditampilkan melalui console. Permasalahan yang sering muncul dari memasukkan input melalui console adalah biasanya user salah mengetikan input Permasalahan tersebut, penulis selesaikan dengan memanfaatkan fungsi berikut
 
 ```cpp
-
-void tampilkanStruk(std::unordered_map<std::string, Menu>& pilihanBelanja)
+char prosesPilihan(std::vector<char> range)
 {
-    std::cout << std::left;
-    std::cout << std::setw(5) << "ID";
-    std::cout << std::setw(14) << "Nama";
-    std::cout << std::setw(8) << "Jumlah";
-    std::cout << std::setw(9) << "Harga";
-    std::cout << '\n';
+    char test;
+    std::cin >> test;
+    bool flagPass = false;
 
-    for (int i = 0; i < 35; ++i)
+    while (!flagPass)
     {
-        std::cout << "=";
+        for (auto uji : range)
+        {
+            if (uji == test)
+                flagPass = true;
+        }
+        if (flagPass == false)
+        {
+            std::cout << "\nInput yang Anda berikan salah! Tolong ketik ID dari pilihan-pilihan yang tersedia\n"
+                      << "Pilih ID: ";
+            std::cin >> test;
+        }
     }
-    std::cout << '\n';
-
-    int totalTransaksi = 0;
-    for (auto& [name, menu] : pilihanBelanja)
-    {
-        std::cout << std::setw(5) << menu.ID
-                  << std::setw(14) << name
-                  << std::setw(8) << menu.Stock
-                  << std::setw(9) << menu.Harga
-                  << std::endl;
-
-        totalTransaksi += menu.Harga;
-    }
-
-    std::cout << "\nTotal Transaksi: Rp" << totalTransaksi << '\n';
+    std::cin.clear();
+    std::cin.ignore();
+    return test;
 }
+```
 
-void tampilkanMenu(std::unordered_map<std::string, Menu>& menuFood, std::unordered_map<std::string, Menu>& menuDrink)
+## Proses Input Nama Makanan atau ID Makanan
+Salah satu fitur yang harus dimiliki oleh program Warung Kang Roger ini adalah meng-input barang hanya dari nama atau ID-nya saja. Proses yang penulis ambil untuk mencapai fitur tersebut adalah dengan men-tranvers setiap element dalam vector. Berikut implementasinya
+
+```cpp
+// return position of searchStr in menuMenu vector
+std::vector<int> KelompokMenu::search_translation(std::string searchStr)
+{
+    for (size_t i = 0; i < menuMenu.size(); ++i)
+    {
+        for (size_t k = 0; k < menuMenu[0].size(); ++k)
+        {
+            if (menuMenu[i][k].Nama == searchStr || menuMenu[i][k].ID == searchStr)
+            {
+                return {static_cast<int>(i), static_cast<int>(k)};
+            }
+        }
+    }
+    return {-1, -1};
+}
+```
+
+## Format Output
+Dalam menampilkan menu dan struk belanja, format console out dibuat dengan format tabel. Hal tersebut dapat dicapai dengan memanfaatkan library *iomanip*. Berikut adalah implementasinya
+
+```cpp
+// Menampilkan daftar manu
+void KelompokMenu::tampilkanMenu()
 {
     std::cout << std::left;
     std::cout << std::setw(10) << "Kategori";
     std::cout << std::setw(5) << "ID";
     std::cout << std::setw(14) << "Nama";
     std::cout << std::setw(8) << "Harga";
-    // std::cout << std::setw(7) << "Stock";
+    std::cout << std::setw(7) << "Stock";
     std::cout << std::endl;
 
-    for (int i = 0; i < 35; ++i)
+    for (int i = 0; i < 42; ++i)
         std::cout << '=';
     std::cout << std::endl;
 
-    for (auto& [name, menu] : menuFood)
+    int count = 1;
+    for (auto& row : menuMenu)
     {
-        std::cout << std::setw(10) << menu.Kategori;
-        std::cout << std::setw(5) << menu.ID;
-        std::cout << std::setw(14) << name;
-        std::cout << std::setw(8) << menu.Harga;
-        // std::cout << std::setw(7) << menu.Stock;
-        std::cout << std::endl;
-    }
-
-    std::cout << '\n';
-    for (auto& [name, menu] : menuDrink)
-    {
-        std::cout << std::setw(10) << menu.Kategori;
-        std::cout << std::setw(5) << menu.ID;
-        std::cout << std::setw(14) << name;
-        std::cout << std::setw(8) << menu.Harga;
-        // std::cout << std::setw(7) << menu.Stock;
-        std::cout << std::endl;
+        for (auto& col : row)
+        {
+            std::cout << std::setw(10) << col.Kategori
+                      << std::setw(5) << col.ID
+                      << std::setw(14) << col.Nama
+                      << std::setw(8) << col.Harga
+                      << std::setw(7) << col.Stock
+                      << '\n';
+            if (count == 7)
+                std::cout << '\n';
+            count++;
+        }
     }
 }
 ```
-</details>
-
-<br>
-
-Dalam format tampilan di console, agar didapatkan tampilan yang rapih maka penulis membuat sebuah fungsi untuk membersihkan atau flushed isi text di console. Berikut adalah implementasinya
-
-<details><summary><b>Implementasi Clear Console</b></summary>
-
+## Menambahkan fitur stok
+Dengan menggunakan struct untuk mengorganisir data-data yang berkaitan, data stok barang juga menjadi lebih mudah untuk diimplementasikan. Untuk memanipulasi stock barang dengan lebih mudah, penulis membuat sebuah fungsi untuk menangani perubahan nilai dari stok
 ```cpp
-void clearScreen()
+void KelompokMenu::updateStock(std::string barang, int newValue)
 {
-#if defined(__linux__) // Or #if __linux__
-    system("clear");
-#elif __APPLE__
-    system("cls");
-#elif _WIN32
-    system("cls");
-#endif
+    if (search_translation(barang)[0] == -1) // barang does not exist -- ERROR
+        return;
+
+    int posKategori = search_translation(barang)[0];
+    int posSubArr = search_translation(barang)[1];
+
+    menuMenu[posKategori][posSubArr].Stock = newValue;
 }
 ```
-</details>
-
-<br>
-
-## Problems in Test Case
-<details>
-<summary><b>Input User Problem</b></summary>
-Setiap menentukan pilihan, cara user memilih keputusan adalah dengan mengetik ID pilihan yang tersedia. Untuk meng-handle kasus user tidak memberikan pilihan yang benar maka dibuatlah function yang bernama "prosesKeputusan()" dengan parameter (1) input pilihan user, (2) Array berisi pilihan-pilihan ID yang valid, dan (3) besar Array pilihan-pilihan.
-
-<br>
-
-**Screenshot Hasil**
-
-![Handle input user edge case](../img/handle-user-input.png)
-
-<br>
-
-**Code**
-
-```cpp
-// Memvalidasi jawaban user -> Akan mengiterasi input user sampai pilihan user benar
-int prosesKeputusan(int *usrInput, int *ptrArr, int sizeArr)
-{
-    if (std::cin.fail())
-    {
-        std::cin.clear();
-        std::cin.ignore();
-        *usrInput = -1;
-    }
-
-    bool salahInput = false;
-
-    for (int i = 0; i < sizeArr; ++i)
-    {
-        if (*usrInput == *(ptrArr + i))
-        {
-            salahInput = true;
-        }
-    }
-
-    if (salahInput)
-    {
-        return *usrInput;
-    }
-    else
-    {
-        std::cout << "\nInput yang Anda berikan salah! Tolong ketik ID dari pilihan-pilihan yang tersedia, yaitu ";
-        bool flagTunggal = true;
-        for (int i = 0; i < sizeArr - 1; ++i)
-        {
-            std::cout << *(ptrArr + i) << ", ";
-            flagTunggal = false;
-        }
-        if (flagTunggal)
-        {
-            std::cout << *(ptrArr + sizeArr - 1) << ".\n\n";
-        }
-        else
-        {
-            std::cout << "dan " << *(ptrArr + sizeArr - 1) << ".\n\n";
-        }
-
-        int newUsrInput;
-        std::cout << "Pilih ID: ";
-        std::cin >> newUsrInput;
-
-        return prosesKeputusan(&newUsrInput, ptrArr, sizeArr);
-    }
-}
-```
-
-</details>
